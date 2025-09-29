@@ -88,9 +88,10 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
     stream: sanitizedBody.stream,
     messages_count: sanitizedBody.messages.length,
   });
+  let timeout: NodeJS.Timeout | null = null; // Declare timeout here
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
     const response = await fetch(XAI_CHAT_URL, {
       method: "POST",
       headers: {
@@ -101,6 +102,7 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
       signal: controller.signal,
     });
     clearTimeout(timeout);
+    timeout = null; // Clear reference
     const rawText = await safeReadText(response);
     let parsedData: any = {};
     try {
@@ -118,7 +120,10 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
     console.debug("✅ Clean response:", JSON.stringify(clean, null, 2));
     return res.status(200).json(clean);
   } catch (err: any) {
-    clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
     if (err.name === "AbortError") {
       console.warn("⚠️ xAI API timeout after 20s");
       return res.status(504).json({
