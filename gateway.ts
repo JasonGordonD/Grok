@@ -91,7 +91,7 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
   let timeout: NodeJS.Timeout | null = null; // Declare timeout here
   try {
     const controller = new AbortController();
-    timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
     const response = await fetch(XAI_CHAT_URL, {
       method: "POST",
       headers: {
