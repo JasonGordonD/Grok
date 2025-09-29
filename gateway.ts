@@ -31,14 +31,14 @@ type ChatPayload = {
 function sanitizeChatBody(b: any): ChatPayload {
   if (!b || typeof b !== "object") {
     return {
-      model: process.env.DEFAULT_CHAT_MODEL || "grok-beta",
+      model: process.env.DEFAULT_CHAT_MODEL || "grok-4-latest",
       messages: [],
       stream: false,
     };
   }
   const { model, messages } = b;
   return {
-    model: model || process.env.DEFAULT_CHAT_MODEL || "grok-beta",
+    model: model || process.env.DEFAULT_CHAT_MODEL || "grok-4-latest",
     messages: Array.isArray(messages) ? messages : [],
     stream: false,
   };
@@ -48,7 +48,7 @@ function sanitizeResponse(data: any) {
   const id = data?.id ?? `chatcmpl-${Date.now()}`;
   const object = "chat.completion";
   const created = data?.created ?? Math.floor(Date.now() / 1000);
-  const model = data?.model ?? process.env.DEFAULT_CHAT_MODEL ?? "grok-beta";
+  const model = data?.model ?? process.env.DEFAULT_CHAT_MODEL ?? "grok-4-latest";
   const rawChoices = Array.isArray(data?.choices) ? data.choices : [];
   const choices = rawChoices.map((choice: any) => {
     const msg = choice.message ?? choice.delta ?? {};
