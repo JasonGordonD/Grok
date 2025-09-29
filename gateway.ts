@@ -31,14 +31,14 @@ type ChatPayload = {
 function sanitizeChatBody(b: any): ChatPayload {
   if (!b || typeof b !== "object") {
     return {
-      model: process.env.DEFAULT_CHAT_MODEL || "grok-4-latest",
+      model: process.env.DEFAULT_CHAT_MODEL || "grok-4-0709",
       messages: [],
       stream: false,
     };
   }
   const { model, messages } = b;
   return {
-    model: model || process.env.DEFAULT_CHAT_MODEL || "grok-4-latest",
+    model: model || process.env.DEFAULT_CHAT_MODEL || "grok-4-0709",
     messages: Array.isArray(messages) ? messages : [],
     stream: false,
   };
@@ -48,7 +48,7 @@ function sanitizeResponse(data: any) {
   const id = data?.id ?? `chatcmpl-${Date.now()}`;
   const object = "chat.completion";
   const created = data?.created ?? Math.floor(Date.now() / 1000);
-  const model = data?.model ?? process.env.DEFAULT_CHAT_MODEL ?? "grok-4-latest";
+  const model = data?.model ?? process.env.DEFAULT_CHAT_MODEL ?? "grok-4-0709";
   const rawChoices = Array.isArray(data?.choices) ? data.choices : [];
   const choices = rawChoices.map((choice: any) => {
     const msg = choice.message ?? choice.delta ?? {};
@@ -88,10 +88,10 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
     stream: sanitizedBody.stream,
     messages_count: sanitizedBody.messages.length,
   });
-  let timeout: NodeJS.Timeout | null = null; // Declare timeout here
+  let timeout: NodeJS.Timeout | null = null;
   try {
     const controller = new AbortController();
-    timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    timeout = setTimeout(() => controller.abort(), 10000); // 10s
     const response = await fetch(XAI_CHAT_URL, {
       method: "POST",
       headers: {
@@ -102,8 +102,8 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    timeout = null; // Clear reference
-    const rawText = await safeReadText(response);
+    timeout = null;
+    const rawText = await response.text();
     let parsedData: any = {};
     try {
       parsedData = JSON.parse(rawText);
@@ -125,7 +125,7 @@ app.post("/chat/completions", async (req: Request, res: Response) => {
       timeout = null;
     }
     if (err.name === "AbortError") {
-      console.warn("⚠️ xAI API timeout after 20s");
+      console.warn("⚠️ xAI API timeout after 10s");
       return res.status(504).json({
         error: "Timeout",
         message: "xAI API did not respond in time",
